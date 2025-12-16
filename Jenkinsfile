@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME              = 'myapp'
+        APP_NAME               = 'myapp'
         // For Docker Hub, image names are usually "username/repo"
-        DOCKER_REPO           = 'ammujun29'
-        DOCKER_IMAGE          = 'ammujun29/myapp-image'   // Explicit to avoid null
+        DOCKER_REPO            = 'ammujun29'
+        DOCKER_IMAGE           = 'ammujun29/myapp-image'   // Explicit to avoid null
         // Uncomment if you use a non-default registry:
-        // DOCKER_REGISTRY     = 'docker.io'
-        DOCKER_CREDENTIALS_ID = 'docker-creds'
+        // DOCKER_REGISTRY      = 'docker.io'
+        DOCKER_CREDENTIALS_ID  = 'docker-creds'
         // If you plan to use an NVD API key securely via Jenkins credentials:
         // NVD_API_KEY_CRED_ID = 'nvd-api-key'
     }
@@ -37,13 +37,11 @@ pipeline {
                 }
             }
         }
-
         stage('Dependency Check') {
-            steps {
-                sh 'mvn dependency-check:check'
-            }
-        }
-
+    steps {
+        sh 'mvn dependency-check:check'
+    }
+}
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
@@ -95,14 +93,14 @@ pipeline {
 
     post {
         success {
-        }  
-        echo 'Pipeline executed successfully!'
+            echo 'Pipeline executed successfully!'
         }
         failure {
             echo 'Pipeline failed!'
         }
         always {
-            echo "Pipeline finished for ${APP_NAME}. Cleaning            echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
+            echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
+}
