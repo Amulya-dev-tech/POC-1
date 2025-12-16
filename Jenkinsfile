@@ -5,7 +5,7 @@ pipeline {
         APP_NAME             = 'myapp'
         // For Docker Hub, image names are usually "username/repo"
         DOCKER_REPO          = 'ammujun29'
-        DOCKER_IMAGE         = "$ammujun29/myapp-image"
+        DOCKER_IMAGE         = "ammujun29/myapp-image"
         // Uncomment if you use a non-default registry:
         // DOCKER_REGISTRY   = 'docker.io'
         DOCKER_CREDENTIALS_ID = 'docker-creds'
