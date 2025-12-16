@@ -21,11 +21,16 @@ pipeline {
             }
         }
 
-        stage('Maven Build') {
-            steps {
-                sh 'mvn -V -B clean package -DskipTests'
-            }
-        }
+        
+stage('Build & Test (with coverage)') {
+      steps {
+        // Runs tests and JaCoCo report because your POM binds:
+        // - jacoco:prepare-agent (default)
+        // - jacoco:report at "verify"
+        sh 'mvn -V -B clean verify'
+      }
+    }
+
 
         stage('SonarQube Analysis') {
             steps {
@@ -50,29 +55,13 @@ pipeline {
         }
 
         // Optional Quality Gate stage:
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 10, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
-
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
-            }
-        }
-
-        stage('Docker Run') {
-            steps {
-                sh '''
-                    docker rm -f ${APP_NAME} || true
-                    docker run -d --name ${APP_NAME} -p 8082:8080 ${DOCKER_IMAGE}:latest
-                '''
-            }
-        }
-    }
+         stage('Quality Gate') {
+             steps {
+                 timeout(time: 10, unit: 'MINUTES') {
+                     waitForQualityGate abortPipeline: true
+                 }
+             }
+         }
 
     post {
         success {
