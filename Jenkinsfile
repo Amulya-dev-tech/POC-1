@@ -13,6 +13,7 @@ pipeline {
     tools {
         // Ensure these tool names match Jenkins Global Tool Configuration
         maven 'maven-3.9.11'
+        dependency-check 'Dependency-check'
     }
 
     stages {
@@ -38,13 +39,20 @@ pipeline {
 
         stage('Dependency Check') {
             steps {
-                sh '''
-                     /opt/dependency-check/bin \
-                      --scan . \
-                      --format HTML \
-                      --out report \
-                      --nvdApiKey "$NVD_API_KEY"
-                '''
+                script {
+                    def dcHome = tool name: 'Dependency-check', type: 'dependency-check'
+                    sh """
+                        echo "Dependency-Check home: ${dcHome}"
+                        ls -la "${dcHome}/bin" || true
+
+                        chmod +x "${dcHome}/bin/dependency-check.sh" || true
+                        "${dcHome}/bin/dependency-check.sh" \
+                          --scan . \
+                          --format HTML \
+                          --out report \
+                          --nvdApiKey "$NVD_API_KEY"
+                    """
+                }
             }
             post {
                 always {
@@ -119,7 +127,6 @@ pipeline {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // Example: archive build outputs when available
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
