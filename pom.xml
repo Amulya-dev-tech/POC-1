@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.springframework</groupId>
+  <artifactId>gs-spring-boot</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.0.5.RELEASE</version>
+  </parent>
+
+  <properties>
+    <!-- Java 8 as in your original project -->
+    <java.version>1.8</java.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+    <!-- Versions for plugins -->
+    <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+    <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+    <jacoco.plugin.version>0.8.11</jacoco.plugin.version>
+    <sonar.maven.plugin.version>3.10.0.2594</sonar.maven.plugin.version>
+
+    <!-- Sonar defaults; host/token will be provided by Jenkins withSonarQubeEnv -->
+    <sonar.projectKey>gs-spring-boot</sonar.projectKey>
+    <sonar.projectName>gs-spring-boot</sonar.projectName>
+    <sonar.sources>src</sonar.sources>
+    <sonar.java.binaries>target/classes</sonar.java.binaries>
+    <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
+    <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Optionally add test dependencies -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!-- Ensure Java compiler settings -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.plugin.version}</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+
+      <!-- Unit test runner (produces surefire reports for Sonar) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <useSystemClassLoader>false</useSystemClassLoader>
+          <reportsDirectory>${sonar.junit.reportPaths}</reportsDirectory>
+        </configuration>
+      </plugin>
+
+      <!-- JaCoCo coverage (Sonar reads target/site/jacoco/jacoco.xml) -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Sonar Maven plugin (updated) -->
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>${sonar.maven.plugin.version}</version>
+      </plugin>
+
+      <!-- Spring Boot plugin with explicit main class -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>hello.Application</mainClass>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>
