@@ -30,9 +30,8 @@
 
     <!-- Sonar defaults; host/token will be provided by Jenkins withSonarQubeEnv -->
     <sonar.projectKey>gs-spring-boot</sonar.projectKey>
-    <sonar.projectName>gs-spring-boot</sonar.projectName>    
-    <sonar.sources>src/main/java</sonar.sources>
-    <sonar.tests>src/test/java</sonar.tests>
+    <sonar.projectName>gs-spring-boot</sonar.projectName>
+    <sonar.sources>src</sonar.sources>
     <sonar.java.binaries>target/classes</sonar.java.binaries>
     <sonar.junit.reportPaths>target/surefire-reports</sonar.junit.reportPaths>
     <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
