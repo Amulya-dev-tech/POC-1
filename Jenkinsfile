@@ -94,3 +94,4 @@ pipeline {
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
        }
+     }
