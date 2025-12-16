@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         APP_NAME     = 'myapp'
-        DOCKER_IMAGE = 'myapp-image'
-        // DOCKER_REGISTRY = 'registry.example.com'
-        // DOCKER_CREDENTIALS_ID = 'docker-creds'
+        DOCKER_IMAGE = 'ammujun29/myapp-image'
+        DOCKER_REGISTRY = 'ammujun29@gmail.com'
+        DOCKER_CREDENTIALS_ID = 'docker-creds'
     }
 
     tools {
@@ -49,8 +49,16 @@ pipeline {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
             }
         }
-
-        stage('Trivy FS Scan') {
+        stage('Push Image') {
+            when {
+                expression { currentBuild.currentResult == 'SUCCESS' }
+            }
+            steps {
+                sh "docker login -u $USERNAME -p $PASSWORD "
+                sh 'docker push ${DOCKER_IMAGE}:latest'
+            }
+        }
+         stage('Trivy FS Scan') {
             steps {
                 sh '''
                     trivy fs \
@@ -58,17 +66,6 @@ pipeline {
                     --exit-code 1 \
                     .
                 '''
-            }
-        }
-
-        stage('Push Image') {
-            when {
-                expression { currentBuild.currentResult == 'SUCCESS' }
-            }
-            steps {
-                echo "Pushing image to registry..."
-                // Example:
-                // sh 'docker push ${DOCKER_IMAGE}:latest'
             }
         }
 
