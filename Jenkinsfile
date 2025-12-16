@@ -28,14 +28,29 @@ pipeline {
             }
         }
  
-        stage('SonarQube Analysis') {
-            steps {
-                // Ensure a SonarQube server is configured and the name matches here
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn -B sonar:sonar'
-                }
-            }
-        }
+       
+stage('SonarQube Analysis') {
+  steps {
+    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+      withSonarQubeEnv('SonarQube') {
+        sh '''
+          mvn -B sonar:sonar \
+            -Dsonar.projectKey=gs-spring-boot \
+            -Dsonar.projectName=gs-spring-boot \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -Dsonar.java.binaries=target/classes \
+            -Dsonar.junit.reportPaths=target/surefire-reports \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.sourceEncoding=UTF-8 \
+            -Dsonar.login=${SONAR_TOKEN} \
+            ${SONAR_HOST_URL:+-Dsonar.host.url=${SONAR_HOST_URL}}
+        '''
+      }
+    }
+  }
+}
+
  
         // Optional Quality Gate stage:
         // stage('Quality Gate') {
