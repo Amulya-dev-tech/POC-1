@@ -1,3 +1,4 @@
+
 pipeline {
   agent any
 
@@ -27,8 +28,7 @@ pipeline {
 
     stage('SonarQube Analysis') {
       steps {
-        // If your SonarQube server is configured in Jenkins "Configure System" with a token,
-        // withSonarQubeEnv('<Name>') injects SONAR_HOST_URL and auth automatically.
+        // Injects SONAR_HOST_URL & credentials from Jenkins "Configure System"
         withSonarQubeEnv('SonarQube') {
           sh '''
             mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922:sonar \
@@ -40,52 +40,41 @@ pipeline {
         }
       }
     }
-stage('SonarQube Analysis') {
-            steps {
-                // Ensure a SonarQube server is configured and the name matches here
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn -B sonar:sonar'
-                }
-            }
+
+    stage('Quality Gate') {
+      steps {
+        Requires SonarQube webhook: http://13.204.90.126:8080/sonarqube-webhook/
+        timeout(time: 10, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
         }
- 
-        // Optional Quality Gate stage:
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 10, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
- 
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
-            }
-        }
- 
-        stage('Docker Run') {
-            steps {
-                sh '''
-                    docker rm -f ${APP_NAME} || true
-                    docker run -d --name ${APP_NAME} -p 8082:8080 ${DOCKER_IMAGE}:latest
-                '''
-            }
-        }
+      }
     }
- 
-    post {
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
-        always {
-            // At least one real step is required — echo is safe.
-            echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // Example artifact archiving (uncomment if you want to use it):
-            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
-        }
+
+    stage('Docker Build') {
+      steps {
+        sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+      }
     }
-}
+
+    stage('Docker Run') {
+      steps {
+        sh '''
+          docker rm -f ${APP_NAME} || true
+          docker run -d --name ${APP_NAME} -p 8081:8080 ${DOCKER_IMAGE}:latest
+        '''
+      }
+    }
+  }
+
+  post {
+    success {
+      echo 'Pipeline executed successfully!'
+    }
+    failure {
+      echo 'Pipeline failed!'
+    }
+    always {
+      echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
+      // archiveArtifacts artifacts: 'target/*.      // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+    }
+  }
