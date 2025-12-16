@@ -10,7 +10,7 @@ pipeline {
         // DOCKER_REGISTRY      = 'docker.io'
         DOCKER_CREDENTIALS_ID  = 'docker-creds'
         // If you plan to use an NVD API key securely via Jenkins credentials:
-        // NVD_API_KEY_CRED_ID = 'nvd-api-key'
+        NVD_API_KEY = credentials('NVD_API_KEY')
     }
 
     tools {
@@ -37,11 +37,19 @@ pipeline {
                 }
             }
         }
+         stages {
         stage('Dependency Check') {
-    steps {
-        sh 'mvn dependency-check:check'
+            steps {
+                sh '''
+                dependency-check/bin/dependency-check.sh \
+                --scan . \
+                --format HTML \
+                --out dependency-check-report \
+                --nvdApiKey $NVD_API_KEY
+                '''
+            }
+        }
     }
-}
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
