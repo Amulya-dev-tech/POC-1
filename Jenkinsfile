@@ -2,16 +2,18 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME               = 'myapp'
-        DOCKER_REPO            = 'ammujun29'
-        DOCKER_IMAGE           = 'ammujun29/myapp-image'
-        DOCKER_CREDENTIALS_ID  = 'docker-creds'
-        // Securely load NVD API key from Jenkins credentials
-        NVD_API_KEY            = credentials('NVD_API_KEY')
+        APP_NAME              = 'myapp'
+        DOCKER_REPO           = 'ammujun29'
+        DOCKER_IMAGE          = 'ammujun29/myapp-image'
+        DOCKER_CREDENTIALS_ID = 'docker-creds'
+        // Securely load NVD API key from Jenkins credentials (Secret Text recommended)
+        NVD_API_KEY           = credentials('NVD_API_KEY')
     }
 
     tools {
+        // Ensure these tool names match Jenkins Global Tool Configuration
         maven 'maven-3.9.11'
+        dependencyCheck 'Dependency-check'
     }
 
     stages {
@@ -38,28 +40,16 @@ pipeline {
         stage('Dependency Check') {
             steps {
                 sh '''
-                    set -e
-
-                    # Prepare directories
-                    mkdir -p /var/jenkins_home/odc-data
-                    mkdir -p report
-
-                    # Run OWASP Dependency-Check using Docker
-                    docker run --rm \
-                      -v "$PWD":/src \
-                      -v /var/jenkins_home/odc-data:/usr/share/dependency-check/data \
-                      -v "$PWD"/report:/report \
-                      -e NVD_API_KEY="${NVD_API_KEY}" \
-                      owasp/dependency-check:latest \
-                      --scan /src \
+                    dependency-check/bin/dependency-check.sh \
+                      --scan . \
                       --format HTML \
-                      --out /report
+                      --out report \
+                      --nvdApiKey "$NVD_API_KEY"
                 '''
             }
             post {
                 always {
-                    // Archive regardless of success to aid troubleshooting
-                    archiveArtifacts artifacts: 'report/dependency-check-report.html', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'report/**', allowEmptyArchive: true
                 }
             }
         }
@@ -72,7 +62,11 @@ pipeline {
 
         stage('Push Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKER_CREDENTIALS_ID}",
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
                     sh '''
                         echo "Logging in to Docker Hub..."
                         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -126,7 +120,8 @@ pipeline {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // archiveArtifacts artifacts: 'target/*.            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+            // Example: archive build outputs when available
+            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
 }
