@@ -2,16 +2,17 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME     = 'myapp'
-        DOCKER_IMAGE = 'ammujun29/myapp-image'
-        DOCKER_REGISTRY = 'ammujun29@gmail.com'
+        APP_NAME        = 'myapp'
+        // For Docker Hub, image names are usually "username/repo"
+        DOCKER_REPO     = 'ammujun29'
+        DOCKER_IMAGE    = "$ammujun29/myapp-image"
+        // Uncomment and set if you use a non-default registry:
+        // DOCKER_REGISTRY = 'docker.io'
         DOCKER_CREDENTIALS_ID = 'docker-creds'
     }
 
     tools {
-        // Change this to match the name configured in Jenkins Global Tool Configuration.
         maven 'maven-3.9.11'
-        // jdk 'jdk-17'
     }
 
     stages {
@@ -35,37 +36,36 @@ pipeline {
             }
         }
 
-        // Optional Quality Gate stage:
-        // stage('Quality Gate') {
-        //     steps {
-        //         timeout(time: 10, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
-
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
             }
         }
-        stage('Push Image') {
-            when {
-                expression { currentBuild.currentResult == 'SUCCESS' }
-            }
-            steps {
-                sh "docker login -u $USERNAME -p $PASSWORD "
-                sh 'docker push ${DOCKER_IMAGE}:latest'
-            }
-        }
-         stage('Trivy FS Scan') {
+
+        stage('Trivy FS Scan') {
             steps {
                 sh '''
-                    trivy fs \
-                    --severity HIGH,CRITICAL \
-                    --exit-code 1 \
-                    .
+                    echo "Running Trivy scan on source code..."
+                    trivy fs --severity HIGH,CRITICAL --exit-code 1 --format table --output trivy-report.txt .
                 '''
+                archiveArtifacts artifacts: 'trivy-report.txt', onlyIfSuccessful: false
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh '''
+                        echo "Logging in to Docker Hub..."
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+                        echo "Pushing image ${DOCKER_IMAGE}:latest..."
+                        docker push ${DOCKER_IMAGE}:latest
+
+                        echo "Logout..."
+                        docker logout
+                    '''
+                }
             }
         }
 
@@ -88,7 +88,6 @@ pipeline {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+            // archiveArtifacts artifacts: 'target/*.            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
-       }
-     }
+    }
