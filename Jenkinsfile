@@ -97,7 +97,6 @@ pipeline {
         success {
             echo 'Pipeline executed successfully!'
         }
-    }
         failure {
             echo 'Pipeline failed!'
         }
@@ -106,4 +105,3 @@ pipeline {
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
-}
