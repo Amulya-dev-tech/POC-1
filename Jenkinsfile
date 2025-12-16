@@ -37,28 +37,11 @@ pipeline {
                 }
             }
         }
-
-        stage('OWASP Dependency-Check') {
-            steps {
-                // Use the right path to dependency-check.sh.
-                // If it's in /opt/dependency-check/bin, change the command accordingly.
-                sh '''
-                    set -e
-                    echo "Running OWASP Dependency-Check..."
-                    mkdir -p dependency-check-report
-
-                    # If dependency-check.sh is not in PATH, use full path, e.g.:
-                    # /opt/dependency-check/bin/dependency-check.sh \
-                    dependency-check/bin/dependency-check.sh \
-                      --scan . \
-                      --format HTML \
-                      --out dependency-check-report \
-                      --project "sonarqube"
-                '''
-                archiveArtifacts artifacts: 'dependency-check-report/**', onlyIfSuccessful: false
-            }
-        }
-
+        stage('Dependency Check') {
+    steps {
+        sh 'mvn dependency-check:check'
+    }
+}
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
