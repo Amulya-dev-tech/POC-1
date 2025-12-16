@@ -17,7 +17,7 @@ pipeline {
     stages {
         stage('Git Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/Amulya-dev-tech/POC-10.git'
+                git branch: 'main', url: 'https://github.com/Amulya-dev-tech/POC-1.git'
             }
         }
 
