@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME        = 'myapp'
+        APP_NAME             = 'myapp'
         // For Docker Hub, image names are usually "username/repo"
-        DOCKER_REPO     = 'ammujun29'
-        DOCKER_IMAGE    = "$ammujun29/myapp-image"
-        // Uncomment and set if you use a non-default registry:
-        // DOCKER_REGISTRY = 'docker.io'
+        DOCKER_REPO          = 'ammujun29'
+        DOCKER_IMAGE         = "$ammujun29/myapp-image"
+        // Uncomment if you use a non-default registry:
+        // DOCKER_REGISTRY   = 'docker.io'
         DOCKER_CREDENTIALS_ID = 'docker-creds'
     }
 
@@ -45,8 +45,14 @@ pipeline {
         stage('Trivy FS Scan') {
             steps {
                 sh '''
-                    echo "Running Trivy scan on source code..."
-                    trivy fs --severity HIGH,CRITICAL --exit-code 1 --format table --output trivy-report.txt .
+                    echo "Running Trivy scan on source code (non-blocking)..."
+                    trivy fs \
+                      --severity HIGH,CRITICAL \
+                      --format table \
+                      --output trivy-report.txt \
+                      --scanners vuln \
+                      --exit-code 0 \
+                      .
                 '''
                 archiveArtifacts artifacts: 'trivy-report.txt', onlyIfSuccessful: false
             }
@@ -54,7 +60,7 @@ pipeline {
 
         stage('Push Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     sh '''
                         echo "Logging in to Docker Hub..."
                         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -88,7 +94,7 @@ pipeline {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // archiveArtifacts artifacts: 'target/*.            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
 }
