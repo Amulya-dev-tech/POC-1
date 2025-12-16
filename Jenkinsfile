@@ -40,10 +40,10 @@ pipeline {
         stage('Dependency Check') {
             steps {
                 sh '''
-                dependency-check/bin/dependency-check.sh \
+                /var/jenkins_home/odc-data \
                 --scan . \
                 --format HTML \
-                --out dependency-check-report \
+                --out report \
                 --nvdApiKey $NVD_API_KEY
                 '''
             }
