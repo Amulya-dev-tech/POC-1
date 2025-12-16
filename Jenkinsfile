@@ -3,14 +3,11 @@ pipeline {
 
     environment {
         APP_NAME               = 'myapp'
-        // For Docker Hub, image names are usually "username/repo"
         DOCKER_REPO            = 'ammujun29'
-        DOCKER_IMAGE           = 'ammujun29/myapp-image'   // Explicit to avoid null
-        // Uncomment if you use a non-default registry:
-        // DOCKER_REGISTRY      = 'docker.io'
+        DOCKER_IMAGE           = 'ammujun29/myapp-image'
         DOCKER_CREDENTIALS_ID  = 'docker-creds'
-        // If you plan to use an NVD API key securely via Jenkins credentials:
-        NVD_API_KEY = credentials('NVD_API_KEY')
+        // Securely load NVD API key from Jenkins credentials
+        NVD_API_KEY            = credentials('NVD_API_KEY')
     }
 
     tools {
@@ -37,17 +34,36 @@ pipeline {
                 }
             }
         }
+
         stage('Dependency Check') {
             steps {
                 sh '''
-                /var/jenkins_home/odc-data \
-                --scan . \
-                --format HTML \
-                --out report \
-                --nvdApiKey $NVD_API_KEY
+                    set -e
+
+                    # Prepare directories
+                    mkdir -p /var/jenkins_home/odc-data
+                    mkdir -p report
+
+                    # Run OWASP Dependency-Check using Docker
+                    docker run --rm \
+                      -v "$PWD":/src \
+                      -v /var/jenkins_home/odc-data:/usr/share/dependency-check/data \
+                      -v "$PWD"/report:/report \
+                      -e NVD_API_KEY="${NVD_API_KEY}" \
+                      owasp/dependency-check:latest \
+                      --scan /src \
+                      --format HTML \
+                      --out /report
                 '''
             }
+            post {
+                always {
+                    // Archive regardless of success to aid troubleshooting
+                    archiveArtifacts artifacts: 'report/dependency-check-report.html', allowEmptyArchive: true
+                }
+            }
         }
+
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
@@ -83,7 +99,11 @@ pipeline {
                       --exit-code 0 \
                       .
                 '''
-                archiveArtifacts artifacts: 'trivy-report.txt', onlyIfSuccessful: false
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
+                }
             }
         }
 
@@ -106,7 +126,6 @@ pipeline {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+            // archiveArtifacts artifacts: 'target/*.            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
-}
