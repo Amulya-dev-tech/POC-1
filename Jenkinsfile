@@ -11,7 +11,7 @@ pipeline {
     tools {
         // Change this to match the name configured in Jenkins Global Tool Configuration.
         // Either set up a tool named "maven-3.9.11" in Jenkins, or change this name below.
-        maven 'Maven3'
+        maven 'maven-3.9.11'
         // jdk 'jdk-17'
     }
  
