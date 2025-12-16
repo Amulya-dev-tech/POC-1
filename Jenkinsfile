@@ -6,12 +6,10 @@ pipeline {
         DOCKER_REPO           = 'ammujun29'
         DOCKER_IMAGE          = 'ammujun29/myapp-image'
         DOCKER_CREDENTIALS_ID = 'docker-creds'
-        // Securely load NVD API key from Jenkins credentials (Secret Text recommended)
-        NVD_API_KEY           = credentials('NVD_API_KEY')
+        NVD_API_KEY           = credentials('NVD_API_KEY') // Secret Text in Jenkins
     }
 
     tools {
-        // Ensure these tool names match Jenkins Global Tool Configuration
         maven 'maven-3.9.11'
     }
 
@@ -38,20 +36,13 @@ pipeline {
 
         stage('Dependency Check') {
             steps {
-                script {
-                    def dcHome = tool name: 'Dependency-check', type: 'dependency-check'
-                    sh """
-                        echo "Dependency-Check home: ${dcHome}"
-                        ls -la "${dcHome}/bin" || true
-
-                        chmod +x "${dcHome}/bin/dependency-check.sh" || true
-                        "${dcHome}/bin/dependency-check.sh" \
-                          --scan . \
-                          --format HTML \
-                          --out report \
-                          --nvdApiKey "$NVD_API_KEY"
-                    """
-                }
+                sh '''
+                    dependency-check/bin/dependency-check.sh \
+                      --scan . \
+                      --format HTML \
+                      --out report \
+                      --nvdApiKey "$NVD_API_KEY"
+                '''
             }
             post {
                 always {
@@ -127,6 +118,5 @@ pipeline {
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
-        }
+               }
     }
-}
