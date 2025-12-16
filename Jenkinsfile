@@ -13,7 +13,6 @@ pipeline {
     tools {
         // Ensure these tool names match Jenkins Global Tool Configuration
         maven 'maven-3.9.11'
-        dependency-check 'Dependency-check'}
     }
 
     stages {
