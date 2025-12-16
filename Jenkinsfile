@@ -21,16 +21,14 @@ pipeline {
             }
         }
 
-        
-stage('Build & Test (with coverage)') {
-      steps {
-        // Runs tests and JaCoCo report because your POM binds:
-        // - jacoco:prepare-agent (default)
-        // - jacoco:report at "verify"
-        sh 'mvn -V -B clean verify'
-      }
-    }
-
+        stage('Build & Test (with coverage)') {
+            steps {
+                // Runs tests and JaCoCo report because your POM binds:
+                // - jacoco:prepare-agent (default)
+                // - jacoco:report at "verify"
+                sh 'mvn -V -B clean verify'
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
@@ -55,13 +53,14 @@ stage('Build & Test (with coverage)') {
         }
 
         // Optional Quality Gate stage:
-         stage('Quality Gate') {
-             steps {
-                 timeout(time: 10, unit: 'MINUTES') {
-                     waitForQualityGate abortPipeline: true
-                 }
-             }
-         }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+    }
 
     post {
         success {
@@ -72,7 +71,6 @@ stage('Build & Test (with coverage)') {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
-            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+            //            // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
-}
