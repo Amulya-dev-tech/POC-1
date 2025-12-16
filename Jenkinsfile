@@ -53,7 +53,7 @@ pipeline {
                       --scan . \
                       --format HTML \
                       --out dependency-check-report \
-                      --project "myapp"
+                      --project "sonarqube"
                 '''
                 archiveArtifacts artifacts: 'dependency-check-report/**', onlyIfSuccessful: false
             }
