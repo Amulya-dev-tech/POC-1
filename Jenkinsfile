@@ -39,7 +39,7 @@ pipeline {
         stage('Dependency Check') {
             steps {
                 sh '''
-                    dependency-check/bin/dependency-check.sh \
+                    dependency-check/bin \
                       --scan . \
                       --format HTML \
                       --out report \
