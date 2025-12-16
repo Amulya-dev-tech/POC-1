@@ -44,7 +44,7 @@ pipeline {
     stage('Quality Gate') {
       steps {
         timeout(time: 10, unit: 'MINUTES') {
-          // Requires SonarQube webhook -> http://<jenkins>/sonarqube-webhook/
+          Requires SonarQube webhook -> http://13.204.90.126:8080/sonarqube-webhook/
           waitForQualityGate abortPipeline: true
         }
       }
