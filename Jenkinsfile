@@ -2,13 +2,15 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME             = 'myapp'
+        APP_NAME               = 'myapp'
         // For Docker Hub, image names are usually "username/repo"
-        DOCKER_REPO          = 'ammujun29'
-        DOCKER_IMAGE         = "ammujun29/myapp-image"
+        DOCKER_REPO            = 'ammujun29'
+        DOCKER_IMAGE           = 'ammujun29/myapp-image'   // Explicit to avoid null
         // Uncomment if you use a non-default registry:
-        // DOCKER_REGISTRY   = 'docker.io'
-        DOCKER_CREDENTIALS_ID = 'docker-creds'
+        // DOCKER_REGISTRY      = 'docker.io'
+        DOCKER_CREDENTIALS_ID  = 'docker-creds'
+        // If you plan to use an NVD API key securely via Jenkins credentials:
+        // NVD_API_KEY_CRED_ID = 'nvd-api-key'
     }
 
     tools {
@@ -36,25 +38,30 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+        stage('OWASP Dependency-Check') {
             steps {
-                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+                // Use the right path to dependency-check.sh.
+                // If it's in /opt/dependency-check/bin, change the command accordingly.
+                sh '''
+                    set -e
+                    echo "Running OWASP Dependency-Check..."
+                    mkdir -p dependency-check-report
+
+                    # If dependency-check.sh is not in PATH, use full path, e.g.:
+                    # /opt/dependency-check/bin/dependency-check.sh \
+                    dependency-check/bin/dependency-check.sh \
+                      --scan . \
+                      --format HTML \
+                      --out dependency-check-report \
+                      --project "myapp"
+                '''
+                archiveArtifacts artifacts: 'dependency-check-report/**', onlyIfSuccessful: false
             }
         }
 
-        stage('Trivy FS Scan') {
+        stage('Docker Build') {
             steps {
-                sh '''
-                    echo "Running Trivy scan on source code (non-blocking)..."
-                    trivy fs \
-                      --severity HIGH,CRITICAL \
-                      --format table \
-                      --output trivy-report.txt \
-                      --scanners vuln \
-                      --exit-code 0 \
-                      .
-                '''
-                archiveArtifacts artifacts: 'trivy-report.txt', onlyIfSuccessful: false
+                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
             }
         }
 
@@ -72,6 +79,22 @@ pipeline {
                         docker logout
                     '''
                 }
+            }
+        }
+
+        stage('Trivy FS Scan') {
+            steps {
+                sh '''
+                    echo "Running Trivy scan on source code (non-blocking)..."
+                    trivy fs \
+                      --severity HIGH,CRITICAL \
+                      --format table \
+                      --output trivy-report.txt \
+                      --scanners vuln \
+                      --exit-code 0 \
+                      .
+                '''
+                archiveArtifacts artifacts: 'trivy-report.txt', onlyIfSuccessful: false
             }
         }
 
