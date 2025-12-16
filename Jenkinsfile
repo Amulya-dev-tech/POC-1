@@ -37,7 +37,6 @@ pipeline {
                 }
             }
         }
-         stages {
         stage('Dependency Check') {
             steps {
                 sh '''
@@ -49,7 +48,6 @@ pipeline {
                 '''
             }
         }
-    }
         stage('Docker Build') {
             steps {
                 sh 'docker build -t ${DOCKER_IMAGE}:latest .'
