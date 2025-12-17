@@ -13,6 +13,8 @@ pipeline {
     tools {
         // Ensure these tool names match Jenkins Global Tool Configuration
         maven 'maven-3.9.11'
+        // Note: OWASP Dependency-Check plugin uses "odcInstallation" inside the step,
+        // not a tools{} entry.
     }
 
     stages {
@@ -35,15 +37,20 @@ pipeline {
                 }
             }
         }
+
         stage('OWASP FS SCAN') {
             steps {
+                // Uses Jenkins OWASP Dependency-Check plugin.
+                // "odcInstallation: 'DC'" must match your Global Tool Configuration entry name.
                 dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'DC'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                // Publish the XML report (plugin typically produces dependency-check-report.xml in workspace)
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
-        }
-        post {
+            post {
                 always {
-                    archiveArtifacts artifacts: 'report/**', allowEmptyArchive: true
+                    // If you also generate HTML via plugin, archive it; otherwise, this can be removed.
+                    // Adjust the pattern to where reports are written for your setup.
+                    archiveArtifacts artifacts: 'dependency-check-report.html, **/dependency-check-report.xml', allowEmptyArchive: true
                 }
             }
         }
@@ -118,3 +125,4 @@ pipeline {
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
         }
     }
+}
