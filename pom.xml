@@ -112,20 +112,5 @@
                     <mainClass>hello.Application</mainClass>
                 </configuration>
             </plugin>
-
-            <!-- OWASP Dependency Check -->
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>9.0.9</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
     </build>
 </project>
