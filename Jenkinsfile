@@ -6,11 +6,14 @@ pipeline {
         DOCKER_REPO           = 'ammujun29'
         DOCKER_IMAGE          = 'ammujun29/myapp-image'
         DOCKER_CREDENTIALS_ID = 'docker-creds'
-        //NVD_API_KEY           = credentials('NVD_API_KEY') // Secret Text in Jenkins
+        // Securely load NVD API key from Jenkins credentials (Secret Text recommended)
+        NVD_API_KEY           = credentials('NVD_API_KEY')
     }
 
     tools {
+        // Ensure these tool names match Jenkins Global Tool Configuration
         maven 'maven-3.9.11'
+        dependencyCheck 'Dependency-check'
     }
 
     stages {
@@ -30,6 +33,23 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh 'mvn -B sonar:sonar'
+                }
+            }
+        }
+
+        stage('Dependency Check') {
+            steps {
+                sh '''
+                    dependency-check/bin/dependency-check.sh \
+                      --scan . \
+                      --format HTML \
+                      --out report \
+                      --nvdApiKey "$NVD_API_KEY"
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'report/**', allowEmptyArchive: true
                 }
             }
         }
@@ -100,7 +120,8 @@ pipeline {
         }
         always {
             echo "Pipeline finished for ${APP_NAME}. Cleaning up / archiving artifacts if needed."
+            // Example: archive build outputs when available
             // archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
-               }
+        }
     }
 }
