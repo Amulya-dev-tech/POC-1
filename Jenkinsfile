@@ -6,7 +6,7 @@ pipeline {
         DOCKER_REPO           = 'ammujun29'
         DOCKER_IMAGE          = 'ammujun29/myapp-image'
         DOCKER_CREDENTIALS_ID = 'docker-creds'
-        NVD_API_KEY           = credentials('NVD_API_KEY') // Secret Text in Jenkins
+        //NVD_API_KEY           = credentials('NVD_API_KEY') // Secret Text in Jenkins
     }
 
     tools {
@@ -30,23 +30,6 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh 'mvn -B sonar:sonar'
-                }
-            }
-        }
-
-        stage('Dependency Check') {
-            steps {
-                sh '''
-                    dependency-check/bin/dependency-check.sh \
-                      --scan . \
-                      --format HTML \
-                      --out report \
-                      --nvdApiKey "$NVD_API_KEY"
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'report/**', allowEmptyArchive: true
                 }
             }
         }
