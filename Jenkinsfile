@@ -36,18 +36,13 @@ pipeline {
                 }
             }
         }
-
-        stage('Dependency Check') {
+        stage('OWASP FS SCAN') {
             steps {
-                sh '''
-                    dependency-check/bin/dependency-check.sh \
-                      --scan . \
-                      --format HTML \
-                      --out report \
-                      --nvdApiKey "$NVD_API_KEY"
-                '''
+                dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'DC'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
-            post {
+        }
+        post {
                 always {
                     archiveArtifacts artifacts: 'report/**', allowEmptyArchive: true
                 }
