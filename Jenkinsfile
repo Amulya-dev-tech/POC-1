@@ -42,7 +42,7 @@ pipeline {
             steps {
                 // Uses Jenkins OWASP Dependency-Check plugin.
                 // "odcInstallation: 'DC'" must match your Global Tool Configuration entry name.
-                dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'DC'
+                dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'Dependency-check'
                 // Publish the XML report (plugin typically produces dependency-check-report.xml in workspace)
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
